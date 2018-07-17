@@ -136,6 +136,7 @@ extern PluginCallbackManager pluginCallbackManager;
 		char CommandStr[64];
 		LogExcess(VB_COMMAND, "CMD: %s\n", command);
 		s = strtok(command,",");
+		do{
 		strcpy(CommandStr, s);
 		if (!strcmp(CommandStr, "s"))
 		{
@@ -350,6 +351,7 @@ extern PluginCallbackManager pluginCallbackManager;
 			s2 = strtok(NULL,",");
 			s3 = strtok(NULL,",");
 			s4 = strtok(NULL,",");
+
 			if (s && s2)
 			{
 				i = StartEffect(s, atoi(s2), atoi(s3), atoi(s4));
@@ -360,6 +362,8 @@ extern PluginCallbackManager pluginCallbackManager;
 			}
 			else
 				sprintf(response,"%d,%d,Invalid Effect,,,,,,,,,,\n",getFPPmode(),COMMAND_FAILED);
+
+
 		}
 		else if (!strcmp(CommandStr, "t"))
 		{
@@ -610,6 +614,7 @@ extern PluginCallbackManager pluginCallbackManager;
 		{
 			sprintf(response,"Invalid command: '%s'\n", CommandStr);
 		}
+		}while((s = strtok(NULL,",")) != NULL);
 
 		if (response2)
 		{

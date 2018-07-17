@@ -46,6 +46,8 @@ int   isActive      = -1;
 char *testMode      = NULL;
 char *channels      = NULL;
 int   channelData   = -1;
+char*  channelData2  = NULL;
+int   patternSize   = 0;
 int   displayVers   = 0;
 
 char                             *dataMap    = NULL;
@@ -123,7 +125,29 @@ int parseArguments(int argc, char **argv) {
 						break;
 			case 'c':	channels = strdup(optarg);
 						break;
-			case 's':	channelData = strtol(optarg, NULL, 10);
+			case 's':	{
+						char* pos = optarg;
+						while((pos = strchr(pos, ',')) != NULL)
+						{
+							patternSize++;
+							pos++;
+						}
+						patternSize++; // we have one more element than delimiters
+
+						printf("elements %d\n", patternSize);
+						channelData2 = (char*)malloc(sizeof(char) * patternSize);
+
+						char* token = strtok(optarg, ",");
+						for(unsigned int i = 0; token != NULL; ++i)
+						{
+//							printf("token: %s\n",token);
+							channelData2[i] = (char)strtol(token, NULL, 10);
+							token = strtok(NULL, ",");
+						}
+
+						channelData = 0;
+//						channelData = strtol(optarg, NULL, 10);
+					}
 						break;
 			case 'h':	usage(argv[0]);
 						exit(EXIT_SUCCESS);
@@ -421,7 +445,15 @@ void FillMappedBlock(char *blockName, int channelData) {
 	FPPChannelMemoryMapControlBlock *cb = FindBlock(blockName);
 
 	if (cb) {
-		memset(dataMap + cb->startChannel - 1, channelData, cb->channelCount);
+		const int copyOperations = cb->channelCount / patternSize;
+	        char* startChannelAddress = dataMap + (cb->startChannel - 1);
+      		for(int i = 0; i < copyOperations; ++i)
+		{
+			memcpy(startChannelAddress + (i * patternSize), channelData2, patternSize);
+		}
+
+
+//		memset(dataMap + cb->startChannel - 1, channelData, cb->channelCount);
 	} else {
 		printf( "ERROR: Could not find MAP %s\n", blockName);
 	}
@@ -523,6 +555,7 @@ int main (int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	free(channelData2);
 	exit(EXIT_SUCCESS);
 }
 

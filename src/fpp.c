@@ -48,6 +48,7 @@ char command[8192];
 char response[256];
 
 void SendCommand(const char * com);
+void SendCommands(const char** com, int count);
 void SetupDomainSocket(void);
 void Usage(char *appname);
 
@@ -146,7 +147,11 @@ int main (int argc, char *argv[])
         sprintf(command,"e,%s,",argv[2]);
       else
         sprintf(command,"e,%s,1,0,0,",argv[2]);
-      SendCommand(command);
+
+	const char* commands[] = {"e,Spot_FadeIn,1,0,1,e,Spot_FadeIn,22,0,1i,e,Spot_FadeIn,43,0,1,e,Spot_FadeIn,64,0,1,"};
+
+//        SendCommand(command);
+        SendCommands(commands, 1);
     }
     // Stop an effect - example "fpp -e effectName"
     else if((strncmp(argv[1],"-E",2) == 0) &&  argc > 2)
@@ -246,6 +251,45 @@ void SetupDomainSocket(void)
  strcpy(server_address.sun_path, FPP_SERVER_SOCKET);
 }
 
+void SendCommands(const char ** com, int commandCount)
+{
+   int max_timeout = 4000;
+
+   address_length = sizeof(struct sockaddr_un);
+   
+   for(int y = 0; y < commandCount; ++y)
+   {
+	 bytes_sent = sendto(socket_fd, com[y], strlen(com[y]), 0,
+                     (struct sockaddr *) &server_address,
+                     sizeof(struct sockaddr_un));
+ 	int i=0;
+	 while(i < max_timeout)
+	 {
+	 	 i++;
+		 bytes_received = recvfrom(socket_fd, response, 256, MSG_DONTWAIT,
+                           (struct sockaddr *) &(server_address),
+                           &address_length);
+	 	 if(bytes_received > 0)
+		 {
+		 	break;
+	 	 }
+//		 usleep(500);
+	 }
+	 if(bytes_received > 0)
+	 {
+		 response[bytes_received] = '\0';
+		 printf("%s",response);
+	 }
+	 else
+	 {
+	 	 printf("false");
+	 }
+   }
+
+
+	 close(socket_fd);
+	 unlink(FPP_CLIENT_SOCKET);
+}
 /*
  *
  */
